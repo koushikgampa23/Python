@@ -224,7 +224,244 @@ This repo contains Advanced topics of python
         values = get_nums()
         for i in values:
             print(i)
+## Asyncio
+    Asyncio is the ideal choice when tasks that wait a lot like network request or reading, It excels in handling many tasks concurrently without using much cpu power, this makes our application more efficient and responsive when your waiting on lot of different tasks.
+    Threads are suited for tasks that may need to wait but also share data, they can run in parallel within the same application making them useful for the tasks that are IO bound but less cpu intensive.
+    For CPU heavy tasks processors are the way to go. Each process handle individually maximizing cpu usage by running in parallel across multiple courts, this is ideal for intensive computation.
+    Asyncio vs threads vs muliprocessing
+    Asyncio - For managing many tasks that are waiting
+    Threads - For parallel tasks that share data with minimal cpu usage
+    Processes - For maximizing performance on CPU intensive tasks
+#### Asyncio Event loop and code
+    Event Loop - it is the core for managing and distributing the tasks
+                 when ever the task gets into the event loop it executed, when the task awaits, it will step aside making enough room to run other task, ensuring the loop is always efficiently utilized, once the awaited operation is complete, the task will resume ensuring smooth and responsive program flow.
+    Thats how event loop keep your python program running efficiently handling multiple tasks asyncronously.
 
+    In python if you async for a function it will return coroutine object
+    The coroutine object must be awaited to get the result of the exectution.
+    If we have 2 coroutines the second coroutine will start running only after the first coroutine is finished
+    Example:
+        import asyncio
+        async def main():
+            print("running main!!!")
+        print(main()) #coroutine object
+
+    Q) Create a coroutine to fetch data with 2 seconds delay
+    Code:
+        import asyncio
+
+        # Lets Define a coroutine that simulates time delay task
+        async def fetch_data(delay, id):
+            print("Fetching data...")
+            await asyncio.sleep(delay)
+            print("Data Fetched")
+            return {"data": f"some data {id}"}
+        
+        async def main():
+            result1 = await fetch_data(2,1)
+            print("Results Received", result1)
+        
+            result2 = await fetch_data(2,2)
+            print("Results Received", result2)
+            print("End of main")
+        
+        asyncio.run(main())
+    Here the result2 is started running only after result1 Now lets speed up this operation and now run both the coroutines at the same time
+
+#### Tasks
+    Task is the way to schedule a coroutine to run as soon as possible and allows us to run multiple coroutines simentanously.
+    As soon as the coroutine is sleeping or watiting on something that's not in our control of program, we can move on and start executing other task.
+    The issue with the previous is we need wait for one coroutine to be finished for other coroutine needs to be executed.
+    we're never going to be executing these tasks at the same time. we're not using multiple cpu cores, but if one task isn't doing something if its idle or if its blocked or if its waiting on something, we can swith over and start woking on another task.
+    The whole goal is optimizing its efficiency so we are always attempting to do something and when we are waiting on something that's not in control of our program we switch over to other task and start working on other task 
+    Optimizing the previous example
+    Code:
+        import asyncio
+
+        # Lets Define a coroutine that simulates time delay task
+        async def fetch_data(delay, id):
+            print("Fetching data...")
+            await asyncio.sleep(delay)
+            print("Data Fetched")
+            return {"data": f"some data {id}"}
+        
+        async def main():
+            task1 = asyncio.create_task(fetch_data(2,1))
+            task2 = asyncio.create_task(fetch_data(3,2))
+            task3 = asyncio.create_task(fetch_data(1,3))
+        
+            result1 = await task1
+            result2 = await task2
+            result3 = await task3
+            print(result1, result2, result3)
+        
+        asyncio.run(main())
+#### What if i have task3 that is dependent on task1 and task2. task3 needs to be executed only after task1,2 executed
+    Code:
+        import asyncio
+        
+        # Lets Define a coroutine that simulates time delay task
+        async def fetch_data(delay, id):
+            print("Fetching data...")
+            await asyncio.sleep(delay)
+            print("Data Fetched")
+            return {"data": f"some data {id}"}
+        
+        async def main():
+            task1 = asyncio.create_task(fetch_data(2,1))
+            task2 = asyncio.create_task(fetch_data(10,2))
+            result1 = await task1
+            result2 = await task2
+            task3 = asyncio.create_task(fetch_data(1,3))
+        
+            result3 = await task3
+            print(result1, result2, result3)
+        
+        asyncio.run(main())
+### Gather function
+    Quick way to run multiple coroutines concurrently. instead of creating create task for every coroutine, we can use gather that will automatically run all the coroutines concurrently and collect the results in the list.
+    Its not that great in error handling.
+    It is not going to cancel the other coroutines if one of them failed, we get weird state if we are not handling execptions or errors manually.
+    Code:
+        import asyncio
+
+        # Lets Define a coroutine that simulates time delay task
+        async def fetch_data(delay, id):
+            print(f"Fetching data{id}...")
+            await asyncio.sleep(delay)
+            print(f"Data Fetched{id}")
+            return {"data": f"some data {id}"}
+        
+        async def main():
+            results = await asyncio.gather(fetch_data(3,1), fetch_data(10,2), fetch_data(2,3))
+        
+            for result in results:
+                print(result)
+        
+        asyncio.run(main())
+    Code output:
+        Fetching data1...
+        Fetching data2...
+        Fetching data3...
+        Data Fetched3
+        Data Fetched1
+        Data Fetched2
+        {'data': 'some data 1'}
+        {'data': 'some data 2'}
+        {'data': 'some data 3'}
+    Analysis:
+        Here Data3 is fetched first since it takes 1 second to exectute, data1 is fetched next since it takes 2 seconds, data2 is fetched next since it takes 10 seconds
+### Task Group
+    It has better task management and better error handling
+    Part of structured concurrency: tasks are managed within a context block.
+    Automatically cancels all other tasks in the group if one fails.
+    Easier to read and reason about, especially for complex task trees.
+    Better cleanup and lifecycle handling.
+    Code:
+        import asyncio
+
+        # Lets Define a coroutine that simulates time delay task
+        async def fetch_data(delay, id):
+            print(f"Fetching data{id}...")
+            await asyncio.sleep(delay)
+            print(f"Data Fetched{id}")
+            return {"data": f"some data {id}"}
+        
+        async def main():
+            tasks = []
+            target_task = [2,1,3]
+        
+            async with asyncio.TaskGroup() as tg:
+                for i in range(len(target_task)):
+                    task = tg.create_task(fetch_data(target_task[i], i))
+                    tasks.append(task)
+            results = [task.result() for task in tasks]
+            print(results)
+        
+        asyncio.run(main())
+### Difference between gather and TaskGroup
+    | Feature                | `asyncio.gather`            | `asyncio.TaskGroup` (3.11+)       |
+| ---------------------- | --------------------------- | --------------------------------- |
+| Python version         | 3.5+                        | 3.11+                             |
+| Structured concurrency | ❌                           | ✅                                 |
+| Error handling         | Suppresses extra exceptions | Cancels siblings and raises error |
+| Task creation          | Automatic                   | Manual via `create_task()`        |
+| Result ordering        | Preserved                   | Manual (you handle result access) |
+| Code readability       | Good for small tasks        | Better for complex flows          |
+
+### synchronization (lock)
+    lock is to archieve synchronization in coroutines espically when we have larger more complicated programs.
+    Lets consider we have a shared resource, it takes some fair amount of time to modify or update on this shared resouce it could be db, or anything.
+    and we want to make sure that no two coroutines work on this resouce at the same time
+    the reason if two coroutines work at the same time or modifying the same file at same time we might get a error.
+    we want to wait for one entire operation to get finished before starting the next operation
+    what does async with lock do?
+        it will check whether the shared resource is running by other coroutine, if yes then it will wait until the task finished.
+                                                                                 if no it will start executing its code block
+                                                                                 before lock is released
+    Lock is actually synchronizing our different coroutines so they can't be using the block of code while another coroutine is executing. It is locking of access to this critical resource only one will be accessing at a time.
+    Code:
+        import asyncio
+
+        # Shared resource
+        shared_resource = 0
+        
+        lock = asyncio.Lock()
+        
+        async def modify_shared_resource():
+            global shared_resource
+            async with lock:
+                # Critical Resource
+                print("Resource before modification", shared_resource)
+                shared_resource += 1
+                asyncio.sleep(2) # Simulating saving in db or saving changes in file
+                print("Resource after modifiying", shared_resource)
+                # Critical Resource released
+        
+        async def main():
+            asyncio.gather(*(modify_shared_resource() for _ in range(5)))
+        
+        asyncio.run(main())
+### Semaphore
+    Allows multiple coroutines to have access to the same object at the same time
+    We can even decide how many we wanted to be
+    We kind of trottle our program and we dont overload the program
+    It is possible to send a bunch of network request at a time not 1000 at a time
+    Code:
+        import asyncio
+
+        async def access_resource(semaphore, resource_id):
+            async with semaphore:
+                print("Accessing resource", resource_id)
+                await asyncio.sleep(1)
+                print("Releasing resouce", resource_id)
+        
+        
+        async def main():
+            semaphore = asyncio.Semaphore(2)
+            await asyncio.gather(*(access_resource(semaphore, i) for i in range(5)))
+        
+        asyncio.run(main())
+    Output:
+        Accessing resource 0
+        Accessing resource 1
+        Releasing resouce 0
+        Releasing resouce 1
+        Accessing resource 2
+        Accessing resource 3
+        Releasing resouce 2
+        Releasing resouce 3
+        Accessing resource 4
+        Releasing resouce 4
+    Analysis:
+        Accessing 2 resources at a time
+## Dunder/ Magic Methods in python
+    
+
+
+
+
+    
 
     
         
