@@ -607,7 +607,35 @@ This repo contains Advanced topics of python
     a = [1,2,3,2,3,4,5,6]
     set_a = {x**2 for x in a}
     print(set_a)
+### Sort list of dictionary, Sort a normal dictionary
+    Sort list of dictionaries based on name or age
+    Code:
+        # Sort a dictionary
+        people = [
+            {"name": "bob", "age": 23},
+            {"name": "alice", "age": 21},
+            {"name": "danny", "age": 20}
+        ]
+        sorted_people_by_name = sorted(people, key=lambda x: x["name"])
+        sorted_people_by_age = sorted(people, key=lambda x: x["age"])
+        print(sorted_people_by_name)
+        print(sorted_people_by_age)
+    Sort a dictionary based on keys or values
+        dict_a.items() returns tuple that contains key,value we are using this priciple to sort dictionary
+        Code:
+            dict_a = {
+                "a": 1,
+                "b": 10,
+                "d": 0,
+                "c": 2,
+            }
+            
+            sort_by_keys = sorted(dict_a.items())
+            print(sort_by_keys)
+            sort_by_values = dict(sorted(dict_a.items(), key=lambda x: x[1])) #To access tuple we use x[0],x[1] for key,value
+            print(sort_by_values)
 
+    
 
     
 
