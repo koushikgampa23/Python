@@ -456,8 +456,160 @@ This repo contains Advanced topics of python
     Analysis:
         Accessing 2 resources at a time
 ## Dunder/ Magic Methods in python
-    
+    Dunder stands for double underscore
+    In python every thing is a class even Integer, String every thing is class
+    Function is also a class
+    def print_hello():
+        pass
+    print(type(print_hello)) #<class 'function'>
+    str1="hello"
+    str2="world"
+    result = str1 + str2 #helloworld
+    How does that work?
+        In the string there is method called __add__ that is equivalent to +, __sub__ that is equivalent to -
+        now the actual code is
+        result = str1.__add__(str2)
+        This __add__ method is already defined the string class
+        Similarly
+        len(str1) -> str1.__len__()
+    Lets create a Counter class
+    Code:
+        # Lets create a counter class that should contain add method
+        class Counter:
+            def __init__(self):
+                self.value = 1
+            
+            def count_up(self):
+                self.value += 1
+            
+            def count_down(self):
+                self.value -= 1
+            
+            def __add__(self, other):
+                if isinstance(other, Counter): #Checking other counter is of same class
+                    return self.value + other.value
+                raise Exception("Invalid type")
+            
+            # It is meant for user friendly output
+            def __str__(self):
+                return f"{self.value}"
+            
+            # It is meant for More detailed output Developer friendly
+            def __repr__(self):
+                return f"Counter={self.value}"
+        
+        counter1 = Counter()
+        counter2 = Counter()
+        
+        counter1.count_up()
+        counter2.count_up()
+        counter2.count_up()
+        
+        print(counter1) # Since __str__ is implemented we could be able to see it if not we would see the address of the object
+        print(repr(counter1))
+        
+        print(counter1+counter2)
+        
+## List Comprehension
+    Code:
+        # List comprehension
+        a = [x for x in range(10)]
+        print(a)
+        
+        # Get all the even numbers from 1 to 50
+        even = []
+        for i in range(1, 50):
+            if(i%2 == 0):
+                even.append(i)
+        print(even)
+        
+        # Q) Use List comprehension for the above example
+        even = [x for x in range(1,50) if x%2==0]
+        print(even)
+        
+        # Q) Check weather a word starts with a and ends with y
+        words = ["abc", "abcy", "abcdy"]
+        result = []
+        for word in words:
+            if len(word) >= 2:
+                if word[0] == "a":
+                    if word[-1] == "y":
+                        result.append(word)
+        print(result)
+        
+        # List comprehension
+        # In the list comprehension we can write multiple if statements
+        result = [
+            word
+            for word in words
+            if len(word) >= 2
+            if word[0] == "a"
+            if word[-1] == "y"
+        ]
+        print(result)
+        
+        # Q) Flattening the matrix
+        matrix = [[1,2],[3,4],[5,6]]
+        flattend_list = []
+        
+        for row in matrix:
+            for elm in row:
+                flattend_list.append(elm)
+        print(flattend_list)
+        
+        flattend_list = [elm for row in matrix for elm in row]
+        print(flattend_list)
+        
+        # Q) Categorize Even and odd
+        category = ["Even" if elm%2==0 else "Odd" for elm in range(10)]
+        print(category)
+        
+        # If i want to use only if statement
+        category = ["Even" for elm in range(10) if elm%2==0]
+        print(category)
+#### List comprehension main examples
+    Code:
+        # In the list comprehension we can write multiple if statements
+        result = [
+            word
+            for word in words
+            if len(word) >= 2
+            if word[0] == "a"
+            if word[-1] == "y"
+        ]
+        print(result)
+        
+        # Q) Categorize Even and odd using if else statement
+        category = ["Even" if elm%2==0 else "Odd" for elm in range(10)]
+        print(category)
+        
+        # If i want to use only if statement
+        category = ["Even" for elm in range(10) if elm%2==0]
+        print(category)
 
+        # Function call
+        def square(x):
+            return x*x
+        square_list = [square(x) for x in range(10)]
+        print(square_list)
+        
+        # Use lambda
+        square = lambda x: x*x
+        square_list = [square(x) for x in range(10)]
+        print(square_list)
+### Dictionary comprehension
+    a = [("a",1), ("b",2)]
+    square = lambda x: x*2
+    dict_a = {k:square(v) for k,v in a}
+    print(dict_a)
+
+    # Set comprehension
+    a = [1,2,3,2,3,4,5,6]
+    set_a = {x**2 for x in a}
+    print(set_a)
+
+
+    
 
 
 
